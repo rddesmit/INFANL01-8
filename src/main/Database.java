@@ -1,6 +1,5 @@
 package main;
 
-import java.io.*;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -11,15 +10,34 @@ import java.sql.Statement;
  */
 public class Database {
 
-    private static final String URL = "jdbc:postgresql://localhost:5432/Opdracht1";
+    private static final String URL = "jdbc:postgresql://localhost:5432/";
     private static final String USERNAME = "javauser";
     private static final String PASSWORD = "java";
 
+    private String table;
     private Connection connection;
+
+    public Database(String table){
+        this.table = table;
+    }
 
     public void connect() throws ClassNotFoundException, SQLException {
         Class.forName("org.postgresql.Driver");
-        connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+        connection = DriverManager.getConnection(URL + table, USERNAME, PASSWORD);
+        connection.setAutoCommit(false);
+    }
+
+    public void insertQuery(String query, int isolationLevel, boolean rollback) throws SQLException {
+
+        connection.setTransactionIsolation(isolationLevel);
+        Statement statement = connection.createStatement();
+        statement.executeUpdate(query);
+        statement.close();
+        if(rollback){
+            connection.rollback();
+        } else {
+            connection.commit();
+        }
     }
 
     public boolean insertQuery(String query){
@@ -29,6 +47,7 @@ public class Database {
             Statement statement = connection.createStatement();
             result = statement.executeUpdate(query);
             statement.close();
+            connection.commit();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -49,12 +68,17 @@ public class Database {
         }
     }
 
-    public void cleanDatabase(){
-        deleteData();
-        insertData();
+    public void cleanOpdracht1(){
+        deleteOpdracht1();
+        insertOpdracht1();
     }
 
-    private void deleteData(){
+    public void cleanOpdracht2(){
+        deleteOpdracht2();
+        insertOpdracht2();
+    }
+
+    private void deleteOpdracht1(){
         insertDelete("DELETE FROM klassen;");
         insertDelete("DELETE FROM adressen;");
         insertDelete("DELETE FROM personen;");
@@ -67,7 +91,14 @@ public class Database {
         insertQuery("SELECT setval(pg_get_serial_sequence('personen', 'persoonsnummer'), 1);");
     }
 
-    private void insertData(){
+    private void deleteOpdracht2(){
+        insertDelete("DELETE FROM Products");
+        insertDelete("DELETE FROM Stock");
+        insertQuery("SELECT setval(pg_get_serial_sequence('Products', '_id'), 1);");
+        insertQuery("SELECT setval(pg_get_serial_sequence('Stock', '_id'), 1);");
+    }
+
+    private void insertOpdracht1(){
         insertQuery("INSERT INTO klassen VALUES ('INF2D', '1-1-2014', '31-12-2014');");
         insertQuery("INSERT INTO klassen VALUES ('INF3D', '1-1-2015', '31-12-2015');");
         insertQuery("INSERT INTO klassen VALUES ('INF25D', '1-7-2014', '30-6-2015');");
@@ -113,6 +144,19 @@ public class Database {
         insertQuery("INSERT INTO roosters (klasnaam, modulecode, docent, beginuur, einduur, datum, lokaal) VALUES ('INF2D', 'INFANL', 'BUSAL.1', 2, 4, '5-6-2014', 'WH104.1.105');");
         insertQuery("INSERT INTO roosters (klasnaam, modulecode, docent, beginuur, einduur, datum, lokaal) VALUES ('INF25D', 'INFSKL', 'BUSAL.1', 4, 6, '5-6-2014', 'WH103.1.105');");
         insertQuery("INSERT INTO roosters (klasnaam, modulecode, docent, beginuur, einduur, datum, lokaal) VALUES ('INF2D', 'INFSKL', 'IJPEW.1', 4, 6, '5-6-2014', 'WH104.1.105');");
+    }
+
+    private void insertOpdracht2(){
+        insertQuery(" INTO Products(Name, Description) VALUES ('iPad', 'Tablet');");
+        insertQuery(" INTO Products(Name, Description) VALUES ('iPhone', 'Mobile');");
+        insertQuery(" INTO Products(Name, Description) VALUES ('iMac', 'Laptop');");
+        insertQuery(" INTO Products(Name, Description) VALUES ('Nexus', 'Mobile');");
+        insertQuery(" INTO Products(Name, Description) VALUES ('Lumia 925', 'Mobile');");
+        insertQuery(" INTO Products(Name, Description) VALUES ('Lumia 1525', 'Mobile');");
+        insertQuery(" INTO Products(Name, Description) VALUES ('Surface', 'Tablet');");
+        insertQuery(" INTO Products(Name, Description) VALUES ('Surface 2', 'Tablet');");
+        insertQuery(" INTO Products(Name, Description) VALUES ('Surface 3', 'Tablet');");
+        insertQuery(" INTO Products(Name, Description) VALUES ('Pebble', 'Smartwatch');");
     }
 
     public void disconnect() throws SQLException {
