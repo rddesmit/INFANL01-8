@@ -1,6 +1,5 @@
 package main;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 
 /**
@@ -12,10 +11,10 @@ public class Transactions {
     private static final int MIN = -5;
     private static final int MAX = 5;
 
-    public static final int PHANTOM = 0;
-    public static final int DIRTY_READ = 1;
+    public static final int INSERT = 0;
+    public static final int SELECT = 1;
 
-    public void startThread(final int transaction, final boolean rollback){
+    public void startThread(final int transaction){
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -29,43 +28,46 @@ public class Transactions {
                 }
 
                 int i = 0;
-                while (true){
+                while (i < RUNS){
                     switch (transaction){
-                        case PHANTOM:
-                            phantomTransaction(database);
+                        case INSERT:
+                            insert(database);
                             break;
-                        case DIRTY_READ:
-                            dirtyReadTransaction(database, rollback);
+                        case SELECT:
+                            select(database);
                             break;
                     }
 
-                    try {
-                        Thread.sleep((int) Math.random() * 11);
+                   try {
+                        Thread.sleep((int) Math.random() * 500);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                     i++;
                 }
+
+                try {
+                    database.disconnect();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
         }).start();
     }
 
-    private void phantomTransaction(Database database){
+    private void insert(Database database){
         try {
-            database.insertQuery("INSERT INTO Stock(Product_id, Modification) VALUES(2, " +
-                    String.valueOf((int) (Math.random() * (MAX - MIN) + MIN)) + ");"
-                    , Connection.TRANSACTION_READ_COMMITTED, false);
+            database.insertTransactionQuery(
+                    "INSERT INTO Stock(Product_id, Modification) " +
+                            "VALUES(2, " + String.valueOf((int) (Math.random() * (MAX - MIN) + MIN)) + "); ");
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    private void dirtyReadTransaction(Database database, boolean rollback){
+    private void select(Database database){
         try {
-            database.insertQuery("INSERT INTO Stock(Product_id, Modification) VALUES(2, " +
-                    String.valueOf((int) (Math.random() * (MAX - MIN) + MIN)) + ");"
-                    , Connection.TRANSACTION_READ_COMMITTED
-                    , rollback);
+            database.insertTransactionQuery("SELECT check_concurency(2) FROM Stock;");
         } catch (SQLException e) {
             e.printStackTrace();
         }

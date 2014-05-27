@@ -1,5 +1,7 @@
 package main;
 
+import org.postgresql.util.PSQLException;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -25,19 +27,21 @@ public class Database {
         Class.forName("org.postgresql.Driver");
         connection = DriverManager.getConnection(URL + table, USERNAME, PASSWORD);
         connection.setAutoCommit(false);
+        connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
     }
 
-    public void insertQuery(String query, int isolationLevel, boolean rollback) throws SQLException {
-
-        connection.setTransactionIsolation(isolationLevel);
-        Statement statement = connection.createStatement();
-        statement.executeUpdate(query);
-        statement.close();
-        if(rollback){
-            connection.rollback();
-        } else {
+    public void insertTransactionQuery(String query) throws SQLException {
+        try {
+            Statement statement = connection.createStatement();
+            statement.execute(query);
+            statement.close();
             connection.commit();
+        } catch (PSQLException e){
+            System.out.println(e.getErrorCode() + e.getMessage());
+            connection.rollback();
+            insertTransactionQuery(query);
         }
+
     }
 
     public boolean insertQuery(String query){

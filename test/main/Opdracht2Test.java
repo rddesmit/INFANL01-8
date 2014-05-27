@@ -2,6 +2,8 @@ package main;
 
 import org.junit.*;
 
+import java.sql.Connection;
+
 /**
  * Created by Rudie on 25-5-14.
  */
@@ -17,8 +19,8 @@ public class Opdracht2Test {
 
     @Test
     public void unrepeatableRead(){
-        new Transactions().startThread(Transactions.PHANTOM, false);
-        new Transactions().startThread(Transactions.PHANTOM, false);
+        new Transactions().startThread(Transactions.INSERT);
+        new Transactions().startThread(Transactions.INSERT);
     }
 
     @After

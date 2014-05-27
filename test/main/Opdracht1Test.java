@@ -3,6 +3,8 @@ package main;
 import main.Database;
 import org.junit.*;
 
+import java.sql.Connection;
+
 import static org.junit.Assert.*;
 
 /**
