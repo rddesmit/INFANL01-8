@@ -3,27 +3,32 @@ package main;
 import java.sql.Connection;
 
 /**
- * Created by Rudie on 20-5-14.
+ * Created by Rudie en Paul on 20-5-14.
  */
 public class Main {
+    // Change variables to your own settings.
+    public static final Database DATABASE = new Database("Opdracht2");
+    public static final String USERNAME = "javauser";
+    public static final String PASSWORD = "java";
 
-    public static void main(String[] args){
-        //new Transactions().startThread(Transactions.UNREPEATABLE_READ, false);
-        //new Transactions().startThread(Transactions.UNREPEATABLE_READ, false);
+    public static final int DEFAULT_ISO_LEVEL = Connection.TRANSACTION_READ_COMMITTED;
 
-        new Transactions().startThread(Transactions.INSERT);
-        new Transactions().startThread(Transactions.INSERT);
-        new Transactions().startThread(Transactions.INSERT);
-        new Transactions().startThread(Transactions.INSERT);
-        new Transactions().startThread(Transactions.INSERT);
+    // Show the deadlock simulation (else shows the Phantom, Unrepeatable and Dirty Read.
+    public static final boolean SHOW_DEADLOCK = false;
 
-        new Transactions().startThread(Transactions.SELECT);
-        new Transactions().startThread(Transactions.SELECT);
-        new Transactions().startThread(Transactions.SELECT);
-        new Transactions().startThread(Transactions.SELECT);
-        new Transactions().startThread(Transactions.SELECT);
+    public static void main(String[] args) {
 
-        //new Transactions().startThread(Transactions.DIRTY_READ, true);
-        //new Transactions().startThread(Transactions.DIRTY_READ, false);
+        if (SHOW_DEADLOCK) {
+            // Deadlock
+            for (int i = 0; i < Integer.valueOf(args[0]); i++) {
+                new Transactions().startThread(Transactions.DEADLOCK);
+            }
+        } else {
+            // Phantom / Unrepeatable Read / Dirty Read
+            for (int i = 0; i < Integer.valueOf(args[0]); i++) {
+                new Transactions().startThread(Transactions.INSERT);
+                new Transactions().startThread(Transactions.SELECT);
+            }
+        }
     }
 }
